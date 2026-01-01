@@ -29,13 +29,14 @@
             </header>
         @endisset
 
-        {{-- Success notifications --}}
-        @session('success')
-            <div class="success-message">{{ session('success') }}</div>
-        @endsession
 
         <!-- Page Content -->
         <main>
+            {{-- Success notifications --}}
+            @session('success')
+                <div class="success-message">{{ session('success') }}</div>
+            @endsession
+
             {{ $slot }}
         </main>
     </div>

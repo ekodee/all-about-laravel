@@ -21,7 +21,7 @@
                         class="mt-1 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200"
                         placeholder="Enter title">
                     @error('title')
-                        <p class="error">{{ $message }}</p>
+                        <div class="error">{{ $message }}</div>
                     @enderror
                 </div>
 
@@ -32,7 +32,7 @@
                         class="mt-1 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200"
                         placeholder="Enter description"></textarea>
                     @error('description')
-                        <p class="error">{{ $message }}</p>
+                        <div class="error">{{ $message }}</div>
                     @enderror
                 </div>
 
@@ -42,7 +42,7 @@
                     <input type="file" id="banner_image" name="banner_image"
                         class="mt-1 p-2 w-full border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-200">
                     @error('banner_image')
-                        <p class="error">{{ $message }}</p>
+                        <div class="error">{{ $message }}</div>
                     @enderror
                 </div>
 
