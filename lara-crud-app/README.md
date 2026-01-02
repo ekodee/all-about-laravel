@@ -1,305 +1,255 @@
-# **CRUD Laravel & Gmail SMTP**
+# 📚 Catatan Belajar Laravel 12 - CRUD & Gmail SMTP
 
-## **A. INSTALASI & SETUP PROJEK LARAVEL 12**
-
-### **1. Instalasi Laravel 12**
-```bash
-composer create-project laravel/laravel laravel-app
-```
-- **Folder proyek baru**: `laravel-app`
-- **Buka di VS Code**: 
-  ```bash
-  cd laravel-app
-  code .
-  ```
-
-### **2. Menjalankan Development Server**
-```bash
-php artisan serve
-```
-- Server berjalan di: `http://localhost:8000`
-- **Error pertama yang mungkin muncul**: "Internal Server Error" karena database belum dikonfigurasi.
+## 📋 Daftar Isi
+- [Instalasi & Setup](#-instalasi--setup)
+- [Autentikasi dengan Breeze](#-autentikasi-dengan-breeze)
+- [CRUD Blog Management](#-crud-blog-management)
+- [Gmail SMTP Configuration](#-gmail-smtp-configuration)
+- [Troubleshooting & Common Errors](#️-troubleshooting--common-errors)
+- [Best Practices](#-best-practices)
 
 ---
 
-## **B. KONFIGURASI DATABASE**
+## 🚀 Instalasi & Setup
 
-### **1. Ganti Database dari SQLite ke MySQL**
-- **File**: `.env`
-- Ubah konfigurasi:
-  ```env
-  DB_CONNECTION=mysql
-  DB_HOST=127.0.0.1
-  DB_PORT=3306
-  DB_DATABASE=nama_database
-  DB_USERNAME=root
-  DB_PASSWORD=
-  ```
-- **Pastikan**: Buat database terlebih dahulu di phpMyAdmin.
+### **1. Install Laravel 12**
+```bash
+composer create-project laravel/laravel nama-project
+cd nama-project
+code .  # Buka di VS Code
+```
 
-### **2. Jalankan Migrasi Default**
+### **2. Konfigurasi Database**
+**File**: `.env`
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nama_database
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+**Jalankan migrasi:**
 ```bash
 php artisan migrate
 ```
-- **Tabel yang dibuat**: `users`, `password_reset_tokens`, `personal_access_tokens`, `failed_jobs`, dll.
-- Setelah ini, halaman utama Laravel seharusnya sudah bisa diakses.
+
+### **3. Jalankan Development Server**
+```bash
+php artisan serve
+```
+👉 **Akses**: `http://localhost:8000`
 
 ---
 
-## **C. INSTALASI AUTHENTIKASI (BREEZE)**
+## 🔐 Autentikasi dengan Breeze
 
-### **1. Install Breeze via Composer**
+### **1. Install Breeze Package**
 ```bash
 composer require laravel/breeze --dev
-```
-
-### **2. Install Breeze Scaffolding**
-```bash
 php artisan breeze:install
 ```
-- **Pilih stack**: `blade` (untuk Blade dengan Alpine)
-- **Dark mode?**: Pilih sesuai preferensi
-- **Testing framework**: `PHPUnit`
-- **Proses ini akan mengubah file**:
-  - `resources/css/app.css` (akan di-overwrite)
-  - `routes/web.php` (ditambahkan rute Breeze)
-  - **File layout dan view baru**
 
-### **3. Generate CSS Build**
+**Pilihan saat instalasi:**
+- **Stack**: `blade` (pilih Blade dengan Alpine)
+- **Dark mode**: Yes/No
+- **Testing framework**: `PHPUnit` (pilih 1)
+
+### **2. Build Assets**
 ```bash
+npm install
 npm run build
 ```
-- **Penting**: Build file CSS akan disimpan di `public/build/assets/`
 
-### **4. Fitur Verifikasi Email**
-- **File**: `app/Models/User.php`
-- Uncomment line:
-  ```php
-  use Illuminate\Contracts\Auth\MustVerifyEmail;
-  ```
-- Ubah class menjadi:
-  ```php
-  class User extends Authenticatable implements MustVerifyEmail
-  ```
-- **Default mailer**: `.env` setting `MAIL_MAILER=log` (email verification link akan disimpan di `storage/logs/laravel.log`)
+### **3. Aktifkan Email Verification**
+**File**: `app/Models/User.php`
+```php
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+class User extends Authenticatable implements MustVerifyEmail
+{
+    // Uncomment line ini:
+    // protected $fillable = [...];
+}
+```
+
+**File**: `.env` (default untuk testing)
+```env
+MAIL_MAILER=log  # Email disimpan di storage/logs/laravel.log
+```
 
 ---
 
-## **D. MEMBUAT APLIKASI BLOG (CRUD)**
+## 📝 CRUD Blog Management
 
-### **1. Membuat Tabel `blogs`**
-- **Buat migration**:
-  ```bash
-  php artisan make:migration create_blogs_table
-  ```
-- **Isi migration** (`database/migrations/xxxx_create_blogs_table.php`):
-  ```php
-  public function up()
-  {
-      Schema::create('blogs', function (Blueprint $table) {
-          $table->id();
-          $table->string('title', 50);
-          $table->text('description')->nullable();
-          $table->string('banner_image', 150)->nullable();
-          $table->foreignId('user_id')->constrained('users');
-          $table->timestamps();
-      });
-  }
-  ```
-- **Jalankan migrasi**:
-  ```bash
-  php artisan migrate
-  ```
+### **1. Membuat Database Migration**
+```bash
+php artisan make:migration create_blogs_table
+```
+
+**File migration** (`database/migrations/xxxx_create_blogs_table.php`):
+```php
+public function up()
+{
+    Schema::create('blogs', function (Blueprint $table) {
+        $table->id();
+        $table->string('title', 50);
+        $table->text('description')->nullable();
+        $table->string('banner_image', 150)->nullable();
+        $table->foreignId('user_id')->constrained('users');
+        $table->timestamps();
+    });
+}
+```
+
+**Jalankan migrasi:**
+```bash
+php artisan migrate
+```
 
 ### **2. Membuat Model & Controller**
 ```bash
 php artisan make:model Blog
 php artisan make:controller BlogController --resource
 ```
-- **File model**: `app/Models/Blog.php`
-  ```php
-  protected $fillable = ['title', 'description', 'banner_image', 'user_id'];
-  ```
 
-### **3. Membuat View (Blade Templates)**
-- **Folder**: `resources/views/blog/`
-- **File yang dibuat**:
-  1. `index.blade.php` (untuk list blogs)
-  2. `create.blade.php` (form tambah blog)
-  3. `show.blade.php` (detail single blog)
-  4. `edit.blade.php` (form edit blog)
+**File model** (`app/Models/Blog.php`):
+```php
+protected $fillable = ['title', 'description', 'banner_image', 'user_id'];
+```
 
-### **4. Setup Resource Routes & Layout**
-- **File**: `routes/web.php`
-  ```php
-  Route::middleware(['auth', 'verified'])->group(function () {
-      Route::resource('blog', BlogController::class);
-  });
-  ```
-- **Update navigation menu** (`resources/views/layouts/navigation.blade.php`):
-  ```blade
-  <x-nav-link :href="route('blog.index')" :active="request()->routeIs('blog.index')">
-      {{ __('Blog') }}
-  </x-nav-link>
-  ```
+### **3. Setup Routes dengan Middleware**
+**File**: `routes/web.php`
+```php
+use App\Http\Controllers\BlogController;
 
----
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('blog', BlogController::class);
+});
+```
 
-## **E. IMPLEMENTASI CRUD OPERATIONS**
+### **4. Membuat Blade Views**
+**Folder**: `resources/views/blog/`
+- `index.blade.php` - List semua blog
+- `create.blade.php` - Form tambah blog
+- `show.blade.php` - Detail single blog
+- `edit.blade.php` - Form edit blog
 
-### **1. CREATE (Store Method)**
-- **File**: `app/Http/Controllers/BlogController.php`
-- **Method `store`**:
-  ```php
-  public function store(Request $request)
-  {
-      // Validasi
-      $data = $request->validate([
-          'title' => 'required|string',
-          'description' => 'required|string',
-          'banner_image' => 'required|image'
-      ]);
-  
-      // Upload gambar
-      if ($request->hasFile('banner_image')) {
-          $data['banner_image'] = $request->file('banner_image')
-              ->store('blogs', 'public');
-      }
-  
-      // Tambah user_id dari user yang login
-      $data['user_id'] = Auth::id();
-  
-      // Simpan ke database
-      Blog::create($data);
-  
-      return redirect()->route('blog.index')
-          ->with('success', 'Blog created successfully');
-  }
-  ```
-
-### **2. READ (Index & Show Methods)**
-- **Index method**:
-  ```php
-  public function index()
-  {
-      $blogs = Blog::where('user_id', auth()->id())
-          ->orderBy('id', 'desc')
-          ->paginate(10);
-      return view('blog.index', compact('blogs'));
-  }
-  ```
-- **Show method**:
-  ```php
-  public function show(Blog $blog)
-  {
-      return view('blog.show', compact('blog'));
-  }
-  ```
-
-### **3. UPDATE (Edit & Update Methods)**
-- **Edit method**:
-  ```php
-  public function edit(Blog $blog)
-  {
-      return view('blog.edit', compact('blog'));
-  }
-  ```
-- **Update method**:
-  ```php
-  public function update(Request $request, Blog $blog)
-  {
-      $data = $request->validate([
-          'title' => 'required|string',
-          'description' => 'required|string',
-          'banner_image' => 'sometimes|image'
-      ]);
-  
-      // Jika ada gambar baru
-      if ($request->hasFile('banner_image')) {
-          // Hapus gambar lama
-          if ($blog->banner_image) {
-              Storage::disk('public')->delete($blog->banner_image);
-          }
-          // Upload gambar baru
-          $data['banner_image'] = $request->file('banner_image')
-              ->store('blogs', 'public');
-      }
-  
-      $blog->update($data);
-  
-      return redirect()->route('blog.show', $blog)
-          ->with('success', 'Blog updated successfully');
-  }
-  ```
-
-### **4. DELETE (Destroy Method)**
-- **Destroy method**:
-  ```php
-  public function destroy(Blog $blog)
-  {
-      // Hapus gambar dari storage
-      if ($blog->banner_image) {
-          Storage::disk('public')->delete($blog->banner_image);
-      }
-      
-      // Hapus dari database
-      $blog->delete();
-  
-      return redirect()->route('blog.index')
-          ->with('success', 'Blog deleted successfully');
-  }
-  ```
-
----
-
-## **F. TRIK & BAGIAN PENTING**
-
-### **1. Storage Link untuk Gambar**
-- Setelah upload gambar ke storage, buat symbolic link:
-  ```bash
-  php artisan storage:link
-  ```
-- **Tampilkan gambar di Blade**:
-  ```blade
-  <img src="{{ asset('storage/' . $blog->banner_image) }}" alt="Banner">
-  ```
-
-### **2. Form Method Spoofing untuk PUT/PATCH/DELETE**
-- **Untuk update form** (method PUT/PATCH):
-  ```blade
-  <form method="POST" action="{{ route('blog.update', $blog) }}">
-      @csrf
-      @method('PUT') <!-- atau @method('PATCH') -->
-      <!-- form fields -->
-  </form>
-  ```
-- **Untuk delete form**:
-  ```blade
-  <form method="POST" action="{{ route('blog.destroy', $blog) }}">
-      @csrf
-      @method('DELETE')
-      <button onclick="return confirm('Are you sure?')">Delete</button>
-  </form>
-  ```
-
-### **3. Menampilkan Pesan Sukses/Error**
-- **Di layout utama** (`resources/views/layouts/app.blade.php`):
-  ```blade
-  @if(session('success'))
-      <div class="success-message">
-          {{ session('success') }}
-      </div>
-  @endif
-  ```
-
-### **4. Pagination di Blade**
+### **5. Update Navigation Menu**
+**File**: `resources/views/layouts/navigation.blade.php`
 ```blade
-{{ $blogs->links() }}
+<x-nav-link :href="route('blog.index')" :active="request()->routeIs('blog.index')">
+    {{ __('Blog') }}
+</x-nav-link>
 ```
 
 ---
 
-## **G. KONFIGURASI GMAIL SMTP**
+## ✨ IMPLEMENTASI CRUD OPERATIONS
+
+### **CREATE - Store Method**
+**File**: `app/Http/Controllers/BlogController.php`
+```php
+public function store(Request $request)
+{
+    // Validasi input
+    $data = $request->validate([
+        'title' => 'required|string',
+        'description' => 'required|string',
+        'banner_image' => 'required|image'
+    ]);
+    
+    // Upload gambar
+    if ($request->hasFile('banner_image')) {
+        $data['banner_image'] = $request->file('banner_image')
+            ->store('blogs', 'public');
+    }
+    
+    // Tambah user_id dari user yang login
+    $data['user_id'] = Auth::id();
+    
+    // Simpan ke database
+    Blog::create($data);
+    
+    return redirect()->route('blog.index')
+        ->with('success', 'Blog created successfully');
+}
+```
+
+### **READ - Index & Show Methods**
+```php
+// Index method - list semua blog user
+public function index()
+{
+    $blogs = Blog::where('user_id', auth()->id())
+        ->orderBy('id', 'desc')
+        ->paginate(10);
+    return view('blog.index', compact('blogs'));
+}
+
+// Show method - detail single blog
+public function show(Blog $blog)
+{
+    return view('blog.show', compact('blog'));
+}
+```
+
+### **UPDATE - Edit & Update Methods**
+```php
+// Edit method - form edit
+public function edit(Blog $blog)
+{
+    return view('blog.edit', compact('blog'));
+}
+
+// Update method - proses update
+public function update(Request $request, Blog $blog)
+{
+    $data = $request->validate([
+        'title' => 'required|string',
+        'description' => 'required|string',
+        'banner_image' => 'sometimes|image'
+    ]);
+    
+    // Jika ada gambar baru
+    if ($request->hasFile('banner_image')) {
+        // Hapus gambar lama
+        if ($blog->banner_image) {
+            Storage::disk('public')->delete($blog->banner_image);
+        }
+        // Upload gambar baru
+        $data['banner_image'] = $request->file('banner_image')
+            ->store('blogs', 'public');
+    }
+    
+    $blog->update($data);
+    
+    return redirect()->route('blog.show', $blog)
+        ->with('success', 'Blog updated successfully');
+}
+```
+
+### **DELETE - Destroy Method**
+```php
+public function destroy(Blog $blog)
+{
+    // Hapus gambar dari storage
+    if ($blog->banner_image) {
+        Storage::disk('public')->delete($blog->banner_image);
+    }
+    
+    // Hapus dari database
+    $blog->delete();
+    
+    return redirect()->route('blog.index')
+        ->with('success', 'Blog deleted successfully');
+}
+```
+
+---
+
+## 📧 Gmail SMTP Configuration
 
 ### **1. Setup di `.env`**
 ```env
@@ -307,132 +257,228 @@ MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=465
 MAIL_USERNAME=email_anda@gmail.com
-MAIL_PASSWORD=app_password_dari_google
+MAIL_PASSWORD=app_password_google
 MAIL_ENCRYPTION=ssl
 MAIL_FROM_ADDRESS=email_anda@gmail.com
-MAIL_FROM_NAME="Your App Name"
+MAIL_FROM_NAME="Nama Aplikasi Anda"
 ```
 
 ### **2. Mendapatkan App Password dari Google**
+**Langkah-langkah:**
 1. Buka: [Google Account Security](https://myaccount.google.com/security)
 2. Aktifkan **2-Step Verification** (jika belum)
-3. Cari "App passwords" atau buka: `myaccount.google.com/apppasswords`
-4. Pilih app: `Mail`
-5. Pilih device: `Other` (nama custom, misal "Laravel App")
-6. Klik "Generate"
-7. **Salin password 16 karakter** (tanpa spasi)
+3. Cari **"App passwords"** 
+4. Atau langsung ke: `myaccount.google.com/apppasswords`
+5. Pilih app: `Mail`
+6. Pilih device: `Other` (beri nama, misal "Laravel App")
+7. Klik **"Generate"**
+8. **Salin password 16 karakter** (tanpa spasi)
 
-### **3. Customize Email Verification Template**
+### **3. Customize Email Template**
 ```bash
 php artisan vendor:publish --tag=laravel-mail
 ```
-- **File template**: `resources/views/vendor/mail/html/message.blade.php`
-- **Ubah logo**: Cari `<img src=...>` dan ganti dengan URL logo Anda.
+
+**File**: `resources/views/vendor/mail/html/message.blade.php`
+- Ganti logo dengan URL logo Anda
+- Customize tampilan sesuai kebutuhan
 
 ### **4. Testing Email Verification**
 1. Register user baru
 2. Check email di Gmail
 3. Klik link verifikasi
-4. User akan langsung login setelah verifikasi
+4. User otomatis login setelah verifikasi
 
 ---
 
-## **H. ERROR UMUM & SOLUSI**
+## ⚠️ Troubleshooting & Common Errors
 
-### **1. "No application encryption key has been specified"**
-```bash
-php artisan key:generate
+### **1. Database Connection Error**
 ```
-
-### **2. "SQLSTATE[HY000] [2002] Connection refused"**
+SQLSTATE[HY000] [2002] Connection refused
+```
+**Solusi:**
 - Pastikan MySQL server running
 - Cek credentials di `.env`
 - Pastikan database sudah dibuat
 
-### **3. Gambar Tidak Muncul Setelah `storage:link`**
-- Periksa path di Blade:
-  ```blade
-  <!-- BENAR: -->
-  <img src="{{ asset('storage/blogs/filename.jpg') }}">
-  
-  <!-- SALAH: -->
-  <img src="storage/blogs/filename.jpg">
-  ```
-
-### **4. "419 Page Expired" pada Form Submit**
+### **2. "419 Page Expired" pada Form Submit**
+**Solusi:**
 - Pastikan ada `@csrf` di dalam form
 - Clear cache:
-  ```bash
-  php artisan cache:clear
-  php artisan config:clear
-  ```
+```bash
+php artisan cache:clear
+php artisan config:clear
+```
 
-### **5. Gmail SMTP Tidak Mengirim Email**
-- Pastikan "Less secure app access" diaktifkan (jika tidak menggunakan App Password)
-- Atau gunakan App Password (direkomendasikan)
-- Port yang benar: `465` (SSL) atau `587` (TLS)
+### **3. Gambar Tidak Muncul**
+**Penyebab:** Belum buat storage link
+**Solusi:**
+```bash
+php artisan storage:link
+```
 
-### **6. Error "Class 'Blog' not found"**
-- Pastikan model sudah di-import di controller:
-  ```php
-  use App\Models\Blog;
-  ```
+**Di Blade, gunakan:**
+```blade
+<!-- BENAR -->
+<img src="{{ asset('storage/' . $blog->banner_image) }}">
+
+<!-- SALAH -->
+<img src="storage/{{ $blog->banner_image }}">
+```
+
+### **4. Gmail SMTP Tidak Mengirim Email**
+**Cek:**
+1. App Password sudah benar (16 karakter, tanpa spasi)
+2. Port yang digunakan: `465` (SSL) atau `587` (TLS)
+3. "Less secure app access" diaktifkan (jika tidak pakai App Password)
+
+### **5. Error "Class 'Blog' not found"**
+**Solusi:** Import model di controller
+```php
+use App\Models\Blog;
+```
+
+### **6. Method Spoofing untuk PUT/PATCH/DELETE**
+**Form edit (method PUT):**
+```blade
+<form method="POST" action="{{ route('blog.update', $blog) }}">
+    @csrf
+    @method('PUT')
+    <!-- form fields -->
+</form>
+```
+
+**Form delete (method DELETE):**
+```blade
+<form method="POST" action="{{ route('blog.destroy', $blog) }}">
+    @csrf
+    @method('DELETE')
+    <button onclick="return confirm('Yakin ingin menghapus?')">
+        Delete
+    </button>
+</form>
+```
+
+---
+
+## 💡 Tips & Best Practices
+
+### **1. Storage Link Setup**
+Selalu jalankan setelah upload gambar pertama:
+```bash
+php artisan storage:link
+```
+
+### **2. Pagination di Blade**
+```blade
+{{ $blogs->links() }}
+```
+
+### **3. Menampilkan Pesan Sukses/Error**
+**Di layout utama** (`resources/views/layouts/app.blade.php`):
+```blade
+@if(session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+```
+
+### **4. Limit Text di Table**
+```blade
+{{ Str::limit($blog->description, 50) }}
+```
+
+### **5. Format Tanggal**
+```blade
+{{ $blog->created_at->format('d M Y') }}
+```
 
 ---
 
-## **I. CHECKLIST FINAL**
+## 📁 Project Structure
+```
+laravel-project/
+├── app/
+│   ├── Http/Controllers/
+│   │   └── BlogController.php
+│   └── Models/
+│       ├── User.php
+│       └── Blog.php
+├── database/
+│   └── migrations/
+│       └── xxxx_create_blogs_table.php
+├── resources/
+│   ├── views/
+│   │   ├── blog/
+│   │   │   ├── index.blade.php
+│   │   │   ├── create.blade.php
+│   │   │   ├── show.blade.php
+│   │   │   └── edit.blade.php
+│   │   └── layouts/
+│   └── css/
+├── storage/
+│   └── app/public/blogs/    # Gambar disimpan di sini
+├── public/
+│   └── storage/             # Symbolic link ke storage
+├── routes/
+│   ├── web.php
+│   └── api.php
+└── .env
+```
 
-### **Setup Awal**
-- [ ] Laravel 12 terinstall
-- [ ] Database connected
-- [ ] Breeze installed & built
-- [ ] Bisa register/login user
+---
 
-### **CRUD Blog**
-- [ ] Migration `blogs` table
-- [ ] Model `Blog` dengan `$fillable`
-- [ ] Resource controller `BlogController`
-- [ ] Blade templates: index, create, show, edit
-- [ ] Resource routes dengan middleware `auth` & `verified`
-- [ ] Form validation
-- [ ] Upload gambar ke storage
-- [ ] `storage:link` untuk akses gambar
-- [ ] Pagination working
-- [ ] Delete dengan konfirmasi
+## 🔗 Git Commands untuk Dokumentasi
+```bash
+# Buat branch khusus dokumentasi
+git checkout -b docs/learning-notes
 
-### **Email Verification**
-- [ ] User model implements `MustVerifyEmail`
-- [ ] Gmail SMTP configured di `.env`
-- [ ] App Password dari Google
-- [ ] Email template customized
-- [ ] Verifikasi link bekerja
+# Commit dengan pattern yang baik
+git add README.md
+git commit -m "docs: add comprehensive laravel crud & smtp notes"
+git push origin docs/learning-notes
+
+# Merge ke main branch
+git checkout main
+git merge docs/learning-notes
+git push origin main
+```
 
 ---
 
-## **J. TIPS PRODUKSI**
-
-1. **Jangan gunakan `php artisan serve` di production**
-   - Gunakan web server seperti Nginx/Apache
-   - Atau deploy ke Laravel Forge, Vapor, shared hosting
-
-2. **Simpan App Password dengan aman**
-   - Jangan commit `.env` ke GitHub
-   - Gunakan environment variables di server
-
-3. **Optimasi upload gambar**
-   - Validasi ukuran file
-   - Resize gambar dengan Intervention Image
-   - Gunakan CDN untuk production
-
-4. **Backup database secara berkala**
-
-5. **Gunakan queue untuk pengiriman email**
-   ```env
-   QUEUE_CONNECTION=database
-   ```
-   Lalu:
-   ```bash
-   php artisan queue:work
-   ```
+## 📚 Resources & References
+- [Laravel Documentation](https://laravel.com/docs/12.x)
+- [Breeze Documentation](https://laravel.com/docs/12.x/starter-kits#laravel-breeze)
+- [Laravel Email Verification](https://laravel.com/docs/12.x/verification)
+- [Google App Passwords](https://myaccount.google.com/apppasswords)
 
 ---
+
+## ✅ Checklist Progress
+- [ ] Laravel 12 installed
+- [ ] Database configured
+- [ ] Breeze authentication working
+- [ ] Blog CRUD operations complete
+- [ ] Image upload working with storage link
+- [ ] Gmail SMTP configured
+- [ ] Email verification working
+- [ ] All forms have CSRF protection
+- [ ] Error handling implemented
+- [ ] Success messages displayed
+
+
+---
+*Last Updated: 2 Januari 2025*  
+*Created with ❤️ untuk pembelajaran Laravel 12*
