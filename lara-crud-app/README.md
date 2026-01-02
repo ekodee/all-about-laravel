@@ -1,8 +1,4 @@
-# **Rangkuman Transkrip - CRUD Laravel & Gmail SMTP**
-
-Berikut adalah catatan komprehensif dari bagian transkrip yang membahas **CRUD Laravel** dan **Gmail SMTP**. Catatan ini dirancang langkah demi langkah dengan penekanan pada bagian penting, kesalahan umum, dan solusi.
-
----
+# **CRUD Laravel & Gmail SMTP**
 
 ## **A. INSTALASI & SETUP PROJEK LARAVEL 12**
 
